@@ -1,26 +1,35 @@
-from summit.optimize import optimize, Guide, Criteria
+import math
 import pandas as pd
+import plotly.graph_objects as go
+from summit.optimize import optimize, Criteria
+from summit.guides.bayesian_optimization import BayesGuide
 
 
 def main():
-    guide = SkeletonGuide()
+    guide = BayesGuide()
     criteria = SkeletonCriteria()
-    domain = pd.DataFrame(dict(x=[1, 2, 3, 4]))
-    fn = lambda x: x ** 2
+    domain = pd.DataFrame(dict(x=list(range(100))))
+    fn = lambda x: (math.sin((math.pi * (x - 20)) / 50) + math.cos((1.5 * math.pi * (x - 20)) / 50)) * 20
 
     optimize(fn, guide, criteria, domain)
 
 
-class SkeletonGuide(Guide):
-    def suggest(self, X, y, domain: pd.DataFrame):
-        return domain.sample(1)
+    fig = go.Figure()
+
+    fig.add_trace(
+        go.Scatter(
+            x=domain.x,
+            y=domain.map(fn).x
+        )
+    )
+    fig.show()
 
 
 class SkeletonCriteria(Criteria):
     def check(self, X, y):
         if len(y) == 0:
             return False
-        return y[-1].iloc[0, 0] > 5
+        return any(y.x > 20)
 
 
 if __name__ == "__main__":
